@@ -69,16 +69,26 @@ class HomeController extends GetxController
     if (tabs != null) {
       this.tabs = tabs
           .map((i) => HomeTabType.values[i])
-          .where((e) => e != HomeTabType.rcmd)
+          .where(
+            (e) =>
+                e != HomeTabType.rcmd &&
+                e != HomeTabType.hot &&
+                e != HomeTabType.rank,
+          )
           .toList();
     } else {
       this.tabs = HomeTabType.values
-          .where((e) => e != HomeTabType.rcmd)
+          .where(
+            (e) =>
+                e != HomeTabType.rcmd &&
+                e != HomeTabType.hot &&
+                e != HomeTabType.rank,
+          )
           .toList();
     }
 
     tabController = TabController(
-      initialIndex: max(0, this.tabs.indexOf(HomeTabType.hot)),
+      initialIndex: max(0, this.tabs.indexOf(HomeTabType.bangumi)),
       length: this.tabs.length,
       vsync: this,
     );
