@@ -410,7 +410,6 @@ class _MainAppState extends PopScopeState<MainApp>
       children: [
         userAvatar(colorScheme: _colorScheme, mainController: _mainController),
         const SizedBox(height: 8),
-        msgBadge(_mainController),
         IconButton(
           tooltip: '搜索',
           icon: const Icon(

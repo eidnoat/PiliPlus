@@ -98,8 +98,6 @@ class _HomePageState extends CommonPageState<HomePage>
     final child = Row(
       children: [
         searchBar(),
-        const SizedBox(width: 4),
-        msgBadge(_mainController),
         const SizedBox(width: 8),
         userAvatar(colorScheme: _colorScheme, mainController: _mainController),
       ],
@@ -157,12 +155,7 @@ class _HomePageState extends CommonPageState<HomePage>
             splashColor: _colorScheme.primaryContainer.withValues(
               alpha: 0.3,
             ),
-            onTap: () => Get.toNamed(
-              '/search',
-              parameters: _homeController.enableSearchWord
-                  ? {'hintText': _homeController.defaultSearch.value}
-                  : null,
-            ),
+            onTap: () => Get.toNamed('/search'),
             child: Row(
               children: [
                 const SizedBox(width: 14),
@@ -173,13 +166,11 @@ class _HomePageState extends CommonPageState<HomePage>
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Obx(
-                    () => Text(
-                      _homeController.defaultSearch.value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: _colorScheme.outline),
-                    ),
+                  child: Text(
+                    '搜索',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: _colorScheme.outline),
                   ),
                 ),
                 const SizedBox(width: 5),

@@ -23,7 +23,7 @@ class HomeController extends GetxController
   RxBool? showTopBar;
   late final bool hideTopBar;
 
-  bool enableSearchWord = Pref.enableSearchWord;
+  bool enableSearchWord = false;
   late final RxString defaultSearch = ''.obs;
   late int lateCheckSearchAt = 0;
 
@@ -67,13 +67,18 @@ class HomeController extends GetxController
   void setTabConfig() {
     final tabs = GStorage.setting.get(SettingBoxKey.tabBarSort) as List?;
     if (tabs != null) {
-      this.tabs = tabs.map((i) => HomeTabType.values[i]).toList();
+      this.tabs = tabs
+          .map((i) => HomeTabType.values[i])
+          .where((e) => e != HomeTabType.rcmd)
+          .toList();
     } else {
-      this.tabs = HomeTabType.values;
+      this.tabs = HomeTabType.values
+          .where((e) => e != HomeTabType.rcmd)
+          .toList();
     }
 
     tabController = TabController(
-      initialIndex: max(0, this.tabs.indexOf(HomeTabType.rcmd)),
+      initialIndex: max(0, this.tabs.indexOf(HomeTabType.hot)),
       length: this.tabs.length,
       vsync: this,
     );
