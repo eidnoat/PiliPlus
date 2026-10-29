@@ -7,9 +7,13 @@ import 'package:PiliPlus/common/widgets/scroll_physics.dart' show tabBarView;
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/home_fav_tab.dart';
 import 'package:PiliPlus/models_new/fav/fav_detail/media.dart';
+import 'package:PiliPlus/models_new/history/list.dart';
 import 'package:PiliPlus/pages/common/common_page.dart';
 import 'package:PiliPlus/pages/fav_detail/controller.dart';
 import 'package:PiliPlus/pages/fav_detail/widget/fav_video_card.dart';
+import 'package:PiliPlus/pages/history/base_controller.dart';
+import 'package:PiliPlus/pages/history/controller.dart';
+import 'package:PiliPlus/pages/history/widgets/item.dart';
 import 'package:PiliPlus/pages/home/controller.dart';
 import 'package:PiliPlus/pages/home/widgets/select_fav_dialog.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
@@ -93,21 +97,11 @@ class _HomePageState extends CommonPageState<HomePage>
       if (_homeController.tabs.isEmpty) {
         content = _buildEmptyView();
       } else if (_homeController.tabs.length == 1) {
-        content = HomeFavFolderView(
-          key: ValueKey(_homeController.tabs.first.id),
-          tab: _homeController.tabs.first,
-        );
+        content = _buildTabContent(_homeController.tabs.first);
       } else {
         content = tabBarView(
           controller: _homeController.tabController!,
-          children: _homeController.tabs
-              .map(
-                (tab) => HomeFavFolderView(
-                  key: ValueKey(tab.id),
-                  tab: tab,
-                ),
-              )
-              .toList(),
+          children: _homeController.tabs.map(_buildTabContent).toList(),
         );
       }
 
@@ -125,6 +119,18 @@ class _HomePageState extends CommonPageState<HomePage>
     });
   }
 
+  Widget _buildTabContent(HomeFavTab tab) {
+    if (tab.isHistory) {
+      return const HomeHistoryView(
+        key: ValueKey('home_history'),
+      );
+    }
+    return HomeFavFolderView(
+      key: ValueKey(tab.id),
+      tab: tab,
+    );
+  }
+
   Widget _buildEmptyView() {
     final isLogin = _mainController.accountService.isLogin.value;
     return Center(
@@ -140,7 +146,7 @@ class _HomePageState extends CommonPageState<HomePage>
             ),
             const SizedBox(height: 16),
             Text(
-              isLogin ? '首页暂无收藏夹' : '未登录',
+              isLogin ? '首页暂无内容' : '未登录',
               style: TextStyle(
                 fontSize: 16,
                 color: _colorScheme.onSurface,
@@ -149,7 +155,9 @@ class _HomePageState extends CommonPageState<HomePage>
             ),
             const SizedBox(height: 8),
             Text(
-              isLogin ? '点击下方按钮选择要在首页展示的收藏夹' : '请先登录后选择收藏夹展示在首页',
+              isLogin
+                  ? '点击下方按钮选择要在首页展示的收藏夹或历史记录'
+                  : '请先登录后选择收藏夹或历史记录展示在首页',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -166,7 +174,7 @@ class _HomePageState extends CommonPageState<HomePage>
                 }
               },
               icon: Icon(isLogin ? Icons.add : Icons.login),
-              label: Text(isLogin ? '选择收藏夹' : '前往登录'),
+              label: Text(isLogin ? '配置首页内容' : '前往登录'),
             ),
           ],
         ),
@@ -181,7 +189,7 @@ class _HomePageState extends CommonPageState<HomePage>
         searchBar(),
         const SizedBox(width: 8),
         IconButton(
-          tooltip: '选择首页收藏夹',
+          tooltip: '配置首页内容',
           icon: const Icon(Icons.bookmarks_outlined),
           onPressed: () => showSelectHomeFavDialog(context),
         ),
@@ -362,6 +370,102 @@ class _HomeFavFolderViewState extends State<HomeFavFolderView>
               )
             : HttpError(
                 errMsg: '收藏夹为空',
+                onReload: controller.onReload,
+              ),
+      Error(:final errMsg) => HttpError(
+          errMsg: errMsg,
+          onReload: controller.onReload,
+        ),
+    };
+  }
+}
+
+class _HomeHistoryController extends HistoryController {
+  _HomeHistoryController() : super('all');
+
+  @override
+  final baseCtr = HistoryBaseController();
+
+  @override
+  void onSelect(HistoryItemModel item) {
+    enableMultiSelect.value = false;
+  }
+}
+
+class HomeHistoryView extends StatefulWidget {
+  const HomeHistoryView({super.key});
+
+  @override
+  State<HomeHistoryView> createState() => _HomeHistoryViewState();
+}
+
+class _HomeHistoryViewState extends State<HomeHistoryView>
+    with AutomaticKeepAliveClientMixin, GridMixin {
+  late final HistoryController controller;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put<HistoryController>(
+      _HomeHistoryController(),
+      tag: 'home_history',
+    );
+  }
+
+  @override
+  void dispose() {
+    Get.delete<HistoryController>(tag: 'home_history');
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return refreshIndicator(
+      onRefresh: controller.onRefresh,
+      child: CustomScrollView(
+        controller: controller.scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.only(
+              top: 7,
+              bottom: 100,
+            ),
+            sliver: Obx(
+              () => _buildBody(controller.loadingState.value),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody(LoadingState<List<HistoryItemModel>?> loadingState) {
+    return switch (loadingState) {
+      Loading() => gridSkeleton,
+      Success(:final response) =>
+        response != null && response.isNotEmpty
+            ? SliverGrid.builder(
+                gridDelegate: gridDelegate,
+                itemBuilder: (context, index) {
+                  if (index == response.length - 1) {
+                    controller.onLoadMore();
+                  }
+                  final item = response[index];
+                  return HistoryItem(
+                    item: item,
+                    ctr: controller,
+                    onDelete: (kid, business) => controller.delHistory(item),
+                  );
+                },
+                itemCount: response.length,
+              )
+            : HttpError(
+                errMsg: '暂无历史记录',
                 onReload: controller.onReload,
               ),
       Error(:final errMsg) => HttpError(

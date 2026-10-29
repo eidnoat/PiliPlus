@@ -14,11 +14,20 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:material_ui/material_ui.dart';
 
-class _FavFolderSelectItem {
-  final FavFolderInfo folder;
+class _HomeTabSelectItem {
+  final int id;
+  final String title;
+  final String subtitle;
+  final IconData icon;
   bool selected;
 
-  _FavFolderSelectItem({required this.folder, required this.selected});
+  _HomeTabSelectItem({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.selected,
+  });
 }
 
 Future<void> showSelectHomeFavDialog(BuildContext context) async {
@@ -27,7 +36,7 @@ Future<void> showSelectHomeFavDialog(BuildContext context) async {
     return;
   }
 
-  SmartDialog.showLoading(msg: '加载收藏夹中...');
+  SmartDialog.showLoading(msg: '加载中...');
   List<FavFolderInfo> allFolders = [];
 
   try {
@@ -66,33 +75,59 @@ Future<void> showSelectHomeFavDialog(BuildContext context) async {
 
   SmartDialog.dismiss();
 
-  if (allFolders.isEmpty) {
-    SmartDialog.showToast('未找到收藏夹');
-    return;
-  }
-
   final homeController = Get.find<HomeController>();
   final currentTabs = homeController.tabs.toList();
   final currentSelectedIds = currentTabs.map((e) => e.id).toSet();
 
-  List<_FavFolderSelectItem> items = [];
+  List<_HomeTabSelectItem> items = [];
   for (final tab in currentTabs) {
-    final match = allFolders.firstWhereOrNull((f) => f.id == tab.id);
-    if (match != null) {
-      items.add(_FavFolderSelectItem(folder: match, selected: true));
-    } else {
+    if (tab.isHistory) {
       items.add(
-        _FavFolderSelectItem(
-          folder: FavFolderInfo(id: tab.id, title: tab.title),
+        _HomeTabSelectItem(
+          id: HomeFavTab.historyId,
+          title: '历史记录',
+          subtitle: '展示近期观看的视频历史记录',
+          icon: Icons.history_rounded,
+          selected: true,
+        ),
+      );
+    } else {
+      final match = allFolders.firstWhereOrNull((f) => f.id == tab.id);
+      items.add(
+        _HomeTabSelectItem(
+          id: match?.id ?? tab.id,
+          title: match?.title ?? tab.title,
+          subtitle: '收藏夹 · 共 ${match?.mediaCount ?? 0} 条内容',
+          icon: Icons.folder_special_outlined,
           selected: true,
         ),
       );
     }
   }
 
+  if (!currentSelectedIds.contains(HomeFavTab.historyId)) {
+    items.add(
+      _HomeTabSelectItem(
+        id: HomeFavTab.historyId,
+        title: '历史记录',
+        subtitle: '展示近期观看的视频历史记录',
+        icon: Icons.history_rounded,
+        selected: false,
+      ),
+    );
+  }
+
   for (final folder in allFolders) {
     if (!currentSelectedIds.contains(folder.id)) {
-      items.add(_FavFolderSelectItem(folder: folder, selected: false));
+      items.add(
+        _HomeTabSelectItem(
+          id: folder.id,
+          title: folder.title,
+          subtitle: '收藏夹 · 共 ${folder.mediaCount} 条内容',
+          icon: Icons.folder_special_outlined,
+          selected: false,
+        ),
+      );
     }
   }
 
@@ -104,7 +139,7 @@ Future<void> showSelectHomeFavDialog(BuildContext context) async {
       items: items,
       onConfirm: (selected) {
         final newTabs = selected
-            .map((e) => HomeFavTab(id: e.folder.id, title: e.folder.title))
+            .map((e) => HomeFavTab(id: e.id, title: e.title))
             .toList();
         homeController.setFolders(newTabs);
       },
@@ -113,8 +148,8 @@ Future<void> showSelectHomeFavDialog(BuildContext context) async {
 }
 
 class _SelectHomeFavDialog extends StatefulWidget {
-  final List<_FavFolderSelectItem> items;
-  final ValueChanged<List<_FavFolderSelectItem>> onConfirm;
+  final List<_HomeTabSelectItem> items;
+  final ValueChanged<List<_HomeTabSelectItem>> onConfirm;
 
   const _SelectHomeFavDialog({
     required this.items,
@@ -126,7 +161,7 @@ class _SelectHomeFavDialog extends StatefulWidget {
 }
 
 class _SelectHomeFavDialogState extends State<_SelectHomeFavDialog> {
-  late final List<_FavFolderSelectItem> items;
+  late final List<_HomeTabSelectItem> items;
 
   @override
   void initState() {
@@ -142,7 +177,7 @@ class _SelectHomeFavDialogState extends State<_SelectHomeFavDialog> {
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('选择首页收藏夹'),
+          const Text('配置首页内容'),
           Text(
             '*可拖动排序',
             style: TextStyle(
@@ -170,15 +205,30 @@ class _SelectHomeFavDialogState extends State<_SelectHomeFavDialog> {
           },
           itemBuilder: (context, index) {
             final item = items[index];
+            final isHistory = item.id == HomeFavTab.historyId;
             return CheckboxListTile(
-              key: ValueKey(item.folder.id),
+              key: ValueKey(item.id),
               value: item.selected,
-              title: Text(
-                item.folder.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              title: Row(
+                children: [
+                  Icon(
+                    item.icon,
+                    size: 18,
+                    color: isHistory
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.secondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-              subtitle: Text('共 ${item.folder.mediaCount} 条内容'),
+              subtitle: Text(item.subtitle),
               secondary: const Icon(Icons.drag_indicator_rounded),
               onChanged: (val) {
                 setState(() {

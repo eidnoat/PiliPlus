@@ -412,10 +412,10 @@ class _MainAppState extends PopScopeState<MainApp>
         userAvatar(colorScheme: _colorScheme, mainController: _mainController),
         const SizedBox(height: 8),
         IconButton(
-          tooltip: '选择首页收藏夹',
+          tooltip: '配置首页内容',
           icon: const Icon(
             Icons.bookmarks_outlined,
-            semanticLabel: '选择首页收藏夹',
+            semanticLabel: '配置首页内容',
           ),
           onPressed: () => showSelectHomeFavDialog(context),
         ),

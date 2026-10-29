@@ -7,6 +7,7 @@ import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/home_fav_tab.dart';
 import 'package:PiliPlus/pages/common/common_controller.dart';
 import 'package:PiliPlus/pages/fav_detail/controller.dart';
+import 'package:PiliPlus/pages/history/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -38,6 +39,9 @@ class HomeController extends GetxController
     if (index < 0 || index >= tabs.length) return null;
     final tab = tabs[index];
     try {
+      if (tab.isHistory) {
+        return Get.find<HistoryController>(tag: 'home_history');
+      }
       return Get.find<FavDetailController>(tag: 'home_fav_${tab.id}');
     } catch (_) {
       return null;

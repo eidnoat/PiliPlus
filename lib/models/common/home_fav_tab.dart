@@ -1,8 +1,14 @@
 class HomeFavTab {
+  static const int historyId = -1;
+
   final int id;
   final String title;
 
   const HomeFavTab({required this.id, required this.title});
+
+  const HomeFavTab.history() : id = historyId, title = '历史记录';
+
+  bool get isHistory => id == historyId;
 
   Map<String, dynamic> toJson() => {
         'id': id,
