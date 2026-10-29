@@ -125,6 +125,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       videoDetailController.plPlayerController.pipNoDanmaku;
 
   bool isShowing = true;
+  bool? _lastShouldShowSeasonPanel;
 
   bool get isFullScreen =>
       videoDetailController.plPlayerController.isFullScreen.value;
@@ -602,10 +603,10 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                       hitTestBehavior: .translucent,
                       controller: videoDetailController.tabCtr,
                       children: [
+                        if (_shouldShowSeasonPanel) seasonPanel,
                         videoIntro(isHorizontal: false, needCtr: false),
                         if (videoDetailController.showReply)
                           videoReplyPanel(isNested: true),
-                        if (_shouldShowSeasonPanel) seasonPanel,
                       ],
                     ),
                   ),
@@ -812,12 +813,12 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                     child: tabBarView(
                       controller: videoDetailController.tabCtr,
                       children: [
+                        if (_shouldShowSeasonPanel) seasonPanel,
                         videoIntro(
                           width: introWidth,
                           height: maxHeight,
                         ),
                         if (videoDetailController.showReply) videoReplyPanel(),
-                        if (_shouldShowSeasonPanel) seasonPanel,
                       ],
                     ),
                   ),
@@ -875,9 +876,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                           child: tabBarView(
                             controller: videoDetailController.tabCtr,
                             children: [
+                              if (_shouldShowSeasonPanel) seasonPanel,
                               if (videoDetailController.showReply)
                                 videoReplyPanel(),
-                              if (_shouldShowSeasonPanel) seasonPanel,
                             ],
                           ),
                         ),
@@ -963,6 +964,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                     child: tabBarView(
                       controller: videoDetailController.tabCtr,
                       children: [
+                        if (_shouldShowSeasonPanel) seasonPanel,
                         if (videoDetailController.isFileSource)
                           localIntroPanel()
                         else if (showIntro)
@@ -980,7 +982,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                             ),
                           ),
                         if (videoDetailController.showReply) videoReplyPanel(),
-                        if (_shouldShowSeasonPanel) seasonPanel,
                       ],
                     ),
                   ),
@@ -1060,6 +1061,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (shouldShowSeasonPanel) Expanded(child: seasonPanel),
                         Expanded(
                           child: videoIntro(
                             width: () {
@@ -1073,7 +1075,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                         ),
                         if (videoDetailController.showReply)
                           Expanded(child: videoReplyPanel()),
-                        if (shouldShowSeasonPanel) Expanded(child: seasonPanel),
                       ],
                     ),
                   ),
@@ -1305,18 +1306,22 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     bool showIntro = true,
     VoidCallback? onTap,
   }) {
+    final shouldShowSeasonPanel = _shouldShowSeasonPanel;
     final tabs = [
+      if (shouldShowSeasonPanel) '播放列表',
       if (showIntro)
         videoDetailController.isFileSource ? '离线视频' : introText ?? '简介',
       if (videoDetailController.showReply) '评论',
-      if (_shouldShowSeasonPanel) '播放列表',
     ];
-    if (videoDetailController.tabCtr.length != tabs.length) {
+    final seasonChanged = _lastShouldShowSeasonPanel != shouldShowSeasonPanel;
+    _lastShouldShowSeasonPanel = shouldShowSeasonPanel;
+    if (videoDetailController.tabCtr.length != tabs.length ||
+        (seasonChanged && shouldShowSeasonPanel)) {
       videoDetailController.tabCtr.dispose();
       videoDetailController.tabCtr = TabController(
         vsync: videoDetailController,
         length: tabs.length,
-        initialIndex: tabs.isEmpty
+        initialIndex: tabs.isEmpty || shouldShowSeasonPanel
             ? 0
             : videoDetailController.tabCtr.index.clamp(0, tabs.length - 1),
       );
