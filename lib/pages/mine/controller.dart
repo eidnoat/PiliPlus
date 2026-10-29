@@ -1,4 +1,6 @@
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
+import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart'
+    show RefreshIndicatorState;
 import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/user.dart';
@@ -33,6 +35,9 @@ import 'package:material_ui/material_ui.dart';
 class MineController extends GetxController with AccountMixin {
   @override
   AccountService accountService = Get.find<AccountService>();
+
+  final GlobalKey<RefreshIndicatorState> refreshKey =
+      GlobalKey<RefreshIndicatorState>();
 
   // 用户信息 头像、昵称、lv
   final Rx<UserInfoData> userInfo = UserInfoData().obs;
@@ -310,14 +315,12 @@ class MineController extends GetxController with AccountMixin {
     );
   }
 
-  Future<void> onReload() {
-    if (!accountService.isLogin.value) {
-      return Future.syncValue(null);
+  Future<void> triggerRefresh() {
+    final state = refreshKey.currentState;
+    if (state != null && state.mounted) {
+      return state.show();
     }
-    queryUserInfo();
-    return Future.wait(
-      tabCtr().map((ctr) => ctr.onReload()),
-    );
+    return onRefresh();
   }
 
   @override
@@ -348,11 +351,9 @@ mixin MineRefreshMixin<R, T> on CommonListController<R, T> {
 
   @override
   Future<void> onRefresh({bool isManual = true}) {
-    if (!isManual) {
-      count = null;
-    }
+    count = null;
     if (isManual) {
-      return super.onRefresh().whenComplete(scrollController.jumpToTop);
+      return super.onRefresh().whenComplete(scrollController.animToTop);
     }
     return super.onRefresh();
   }

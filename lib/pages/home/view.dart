@@ -313,29 +313,31 @@ class _HomeFavFolderViewState extends State<HomeFavFolderView>
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
-    final child = CustomScrollView(
-      controller: controller.scrollController,
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.only(
-            left: Style.safeSpace,
-            right: Style.safeSpace,
-            top: Style.cardSpace,
-            bottom: 100,
-          ),
-          sliver: Obx(
-            () => _buildBody(theme, controller.loadingState.value),
-          ),
-        ),
-      ],
-    );
-    if (PlatformUtils.isDesktop) {
-      return child;
-    }
     return refreshIndicator(
+      key: Get.find<HomeController>().getRefreshKey(
+        'home_fav_${widget.tab.id}',
+      ),
+      notificationPredicate: PlatformUtils.isDesktop
+          ? (_) => false
+          : defaultScrollNotificationPredicate,
       onRefresh: controller.onRefresh,
-      child: child,
+      child: CustomScrollView(
+        controller: controller.scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.only(
+              left: Style.safeSpace,
+              right: Style.safeSpace,
+              top: Style.cardSpace,
+              bottom: 100,
+            ),
+            sliver: Obx(
+              () => _buildBody(theme, controller.loadingState.value),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -429,27 +431,27 @@ class _HomeHistoryViewState extends State<HomeHistoryView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final child = CustomScrollView(
-      controller: controller.scrollController,
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.only(
-            top: 7,
-            bottom: 100,
-          ),
-          sliver: Obx(
-            () => _buildBody(controller.loadingState.value),
-          ),
-        ),
-      ],
-    );
-    if (PlatformUtils.isDesktop) {
-      return child;
-    }
     return refreshIndicator(
+      key: Get.find<HomeController>().getRefreshKey('home_history'),
+      notificationPredicate: PlatformUtils.isDesktop
+          ? (_) => false
+          : defaultScrollNotificationPredicate,
       onRefresh: controller.onRefresh,
-      child: child,
+      child: CustomScrollView(
+        controller: controller.scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.only(
+              top: 7,
+              bottom: 100,
+            ),
+            sliver: Obx(
+              () => _buildBody(controller.loadingState.value),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

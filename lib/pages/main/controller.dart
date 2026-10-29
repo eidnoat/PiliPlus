@@ -337,20 +337,20 @@ class MainController extends GetxController
     }
   }
 
+  Future<void> refreshCurrentPage() {
+    return switch (navigationBars[selectedIndex.value]) {
+      NavigationBarType.home => homeController.onRefresh(),
+      NavigationBarType.dynamics => dynamicController.onRefresh(),
+      NavigationBarType.mine =>
+        Get.isRegistered<MineController>()
+            ? Get.find<MineController>().triggerRefresh()
+            : Future.value(),
+    };
+  }
+
   bool refreshRecommendations() {
-    switch (navigationBars[selectedIndex.value]) {
-      case NavigationBarType.home:
-        homeController.onReload();
-        return true;
-      case NavigationBarType.dynamics:
-        dynamicController.onReload();
-        return true;
-      case NavigationBarType.mine:
-        if (Get.isRegistered<MineController>()) {
-          Get.find<MineController>().onReload();
-        }
-        return true;
-    }
+    refreshCurrentPage();
+    return true;
   }
 
   @override

@@ -430,16 +430,72 @@ class _MainAppState extends PopScopeState<MainApp>
         ),
         if (PlatformUtils.isDesktop) ...[
           const SizedBox(height: 8),
-          IconButton(
-            tooltip: '刷新',
-            icon: const Icon(
-              Icons.refresh,
-              semanticLabel: '刷新',
-            ),
-            onPressed: _mainController.refreshRecommendations,
-          ),
+          _DesktopRefreshButton(onRefresh: _mainController.refreshCurrentPage),
         ],
       ],
+    );
+  }
+}
+
+class _DesktopRefreshButton extends StatefulWidget {
+  final Future<void> Function() onRefresh;
+
+  const _DesktopRefreshButton({required this.onRefresh});
+
+  @override
+  State<_DesktopRefreshButton> createState() => _DesktopRefreshButtonState();
+}
+
+class _DesktopRefreshButtonState extends State<_DesktopRefreshButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 600),
+  );
+  bool _isRefreshing = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleRefresh() async {
+    if (_isRefreshing) return;
+    _isRefreshing = true;
+    _controller.repeat();
+    try {
+      await widget.onRefresh();
+    } finally {
+      if (mounted) {
+        final remaining = (1.0 - _controller.value).clamp(0.0, 1.0);
+        await _controller.animateTo(
+          1.0,
+          duration: Duration(
+            milliseconds: (remaining * 500).round().clamp(180, 500),
+          ),
+          curve: Curves.easeOutCubic,
+        );
+        if (mounted) {
+          _controller.reset();
+        }
+      }
+      _isRefreshing = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: '刷新',
+      onPressed: _handleRefresh,
+      icon: RotationTransition(
+        turns: _controller,
+        child: const Icon(
+          Icons.refresh,
+          semanticLabel: '刷新',
+        ),
+      ),
     );
   }
 }

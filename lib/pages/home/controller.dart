@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart'
+    show RefreshIndicatorState;
 import 'package:PiliPlus/http/api.dart';
 import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/init.dart';
@@ -32,6 +34,14 @@ class HomeController extends GetxController
   late int lateCheckSearchAt = 0;
 
   final ScrollController _fallbackScrollController = ScrollController();
+  final Map<String, GlobalKey<RefreshIndicatorState>> refreshKeys = {};
+
+  GlobalKey<RefreshIndicatorState> getRefreshKey(String tag) {
+    return refreshKeys.putIfAbsent(
+      tag,
+      () => GlobalKey<RefreshIndicatorState>(),
+    );
+  }
 
   CommonController? get controller {
     if (tabs.isEmpty || tabController == null) return null;
@@ -85,14 +95,19 @@ class HomeController extends GetxController
 
   @override
   Future<void> onRefresh() {
-    return controller?.onRefresh().catchError((e) {
-      if (kDebugMode) debugPrint(e.toString());
-    }) ?? Future.value();
-  }
-
-  Future<void> onReload() {
     animateToTop();
-    return controller?.onReload().catchError((e) {
+    if (tabs.isNotEmpty && tabController != null) {
+      final index = tabController!.index;
+      if (index >= 0 && index < tabs.length) {
+        final tab = tabs[index];
+        final tag = tab.isHistory ? 'home_history' : 'home_fav_${tab.id}';
+        final refreshState = refreshKeys[tag]?.currentState;
+        if (refreshState != null && refreshState.mounted) {
+          return refreshState.show();
+        }
+      }
+    }
+    return controller?.onRefresh().catchError((e) {
       if (kDebugMode) debugPrint(e.toString());
     }) ?? Future.value();
   }
