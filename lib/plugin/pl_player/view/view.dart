@@ -853,20 +853,61 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         },
       ),
 
+      /// 窗口全屏
+      BottomControlType.windowFullscreen => Obx(
+        () {
+          final isWindowFs =
+              isFullScreen && plPlayerController.isWindowFullScreen.value;
+          return ComBtn(
+            width: widgetWidth,
+            height: 30,
+            tooltip: isWindowFs ? '退出窗口全屏' : '窗口全屏',
+            icon: isWindowFs
+                ? const Icon(Icons.fullscreen_exit, size: 24, color: Colors.white)
+                : const Icon(Icons.fit_screen, size: 22, color: Colors.white),
+            onTap: () {
+              if (isWindowFs) {
+                plPlayerController.triggerFullScreen(status: false);
+              } else {
+                plPlayerController.triggerFullScreen(
+                  status: true,
+                  inAppFullScreen: true,
+                );
+              }
+            },
+          );
+        },
+      ),
+
       /// 全屏
-      BottomControlType.fullscreen => ComBtn(
-        width: widgetWidth,
-        height: 30,
-        tooltip: isFullScreen ? '退出全屏' : '全屏',
-        icon: isFullScreen
-            ? const Icon(Icons.fullscreen_exit, size: 24, color: Colors.white)
-            : const Icon(Icons.fullscreen, size: 24, color: Colors.white),
-        onTap: () =>
-            plPlayerController.triggerFullScreen(status: !isFullScreen),
-        onSecondaryTap: () => plPlayerController.triggerFullScreen(
-          status: !isFullScreen,
-          inAppFullScreen: true,
-        ),
+      BottomControlType.fullscreen => Obx(
+        () {
+          final isDesktopFs =
+              isFullScreen && !plPlayerController.isWindowFullScreen.value;
+          final isOsFs = PlatformUtils.isDesktop ? isDesktopFs : isFullScreen;
+          return ComBtn(
+            width: widgetWidth,
+            height: 30,
+            tooltip: isOsFs ? '退出全屏' : '全屏',
+            icon: isOsFs
+                ? const Icon(Icons.fullscreen_exit, size: 24, color: Colors.white)
+                : const Icon(Icons.fullscreen, size: 24, color: Colors.white),
+            onTap: () {
+              if (isOsFs) {
+                plPlayerController.triggerFullScreen(status: false);
+              } else {
+                plPlayerController.triggerFullScreen(
+                  status: true,
+                  inAppFullScreen: false,
+                );
+              }
+            },
+            onSecondaryTap: () => plPlayerController.triggerFullScreen(
+              status: !isFullScreen,
+              inAppFullScreen: true,
+            ),
+          );
+        },
       ),
     };
 
@@ -890,6 +931,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       .subtitle,
       .speed,
       if (isNotFileSource && flag) .qa,
+      if (PlatformUtils.isDesktop && !plPlayerController.isDesktopPip)
+        .windowFullscreen,
       if (!plPlayerController.isDesktopPip) .fullscreen,
     ];
     return PlayerBar(
@@ -1219,8 +1262,16 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     if (PlatformUtils.isDesktop) {
       final buttons = event.buttons;
       final isSecondaryBtn = buttons == kSecondaryMouseButton;
-      if (isSecondaryBtn || buttons == kMiddleMouseButton) {
-        _pendingFullScreenToggle = (!isFullScreen, isSecondaryBtn);
+      if (isSecondaryBtn) {
+        final isWindowFs =
+            isFullScreen && plPlayerController.isWindowFullScreen.value;
+        _pendingFullScreenToggle = (!isWindowFs, true);
+        return;
+      }
+      if (buttons == kMiddleMouseButton) {
+        final isOsFs =
+            isFullScreen && !plPlayerController.isWindowFullScreen.value;
+        _pendingFullScreenToggle = (!isOsFs, false);
         return;
       }
     }

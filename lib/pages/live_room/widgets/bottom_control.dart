@@ -6,6 +6,7 @@ import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
+import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
@@ -201,28 +202,74 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
                 );
               },
             ),
+            if (PlatformUtils.isDesktop && !plPlayerController.isDesktopPip)
+              Obx(() {
+                final isFullScreen = plPlayerController.isFullScreen.value;
+                final isWindowFs =
+                    isFullScreen && plPlayerController.isWindowFullScreen.value;
+                return ComBtn(
+                  height: 30,
+                  tooltip: isWindowFs ? '退出窗口全屏' : '窗口全屏',
+                  icon: isWindowFs
+                      ? const Icon(
+                          Icons.fullscreen_exit,
+                          size: 24,
+                          color: Colors.white,
+                        )
+                      : const Icon(
+                          Icons.fit_screen,
+                          size: 22,
+                          color: Colors.white,
+                        ),
+                  onTap: () {
+                    if (isWindowFs) {
+                      plPlayerController.triggerFullScreen(status: false);
+                    } else {
+                      plPlayerController.triggerFullScreen(
+                        status: true,
+                        inAppFullScreen: true,
+                      );
+                    }
+                  },
+                );
+              }),
             if (!plPlayerController.isDesktopPip)
-              ComBtn(
-                height: 30,
-                tooltip: isFullScreen ? '退出全屏' : '全屏',
-                icon: isFullScreen
-                    ? const Icon(
-                        Icons.fullscreen_exit,
-                        size: 24,
-                        color: Colors.white,
-                      )
-                    : const Icon(
-                        Icons.fullscreen,
-                        size: 24,
-                        color: Colors.white,
-                      ),
-                onTap: () =>
-                    plPlayerController.triggerFullScreen(status: !isFullScreen),
-                onSecondaryTap: () => plPlayerController.triggerFullScreen(
-                  status: !isFullScreen,
-                  inAppFullScreen: true,
-                ),
-              ),
+              Obx(() {
+                final isFullScreen = plPlayerController.isFullScreen.value;
+                final isDesktopFs =
+                    isFullScreen && !plPlayerController.isWindowFullScreen.value;
+                final isOsFs =
+                    PlatformUtils.isDesktop ? isDesktopFs : isFullScreen;
+                return ComBtn(
+                  height: 30,
+                  tooltip: isOsFs ? '退出全屏' : '全屏',
+                  icon: isOsFs
+                      ? const Icon(
+                          Icons.fullscreen_exit,
+                          size: 24,
+                          color: Colors.white,
+                        )
+                      : const Icon(
+                          Icons.fullscreen,
+                          size: 24,
+                          color: Colors.white,
+                        ),
+                  onTap: () {
+                    if (isOsFs) {
+                      plPlayerController.triggerFullScreen(status: false);
+                    } else {
+                      plPlayerController.triggerFullScreen(
+                        status: true,
+                        inAppFullScreen: false,
+                      );
+                    }
+                  },
+                  onSecondaryTap: () => plPlayerController.triggerFullScreen(
+                    status: !isFullScreen,
+                    inAppFullScreen: true,
+                  ),
+                );
+              }),
           ],
         ),
       ),

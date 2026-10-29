@@ -127,6 +127,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
   final RxBool controlsLock = false.obs;
 
   final RxBool isFullScreen = false.obs;
+  final RxBool isWindowFullScreen = false.obs;
   bool isLive = false;
 
   bool _isVertical = false;
@@ -1481,6 +1482,9 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
 
   void _setFullScreen(bool val) {
     isFullScreen.value = val;
+    if (!val) {
+      isWindowFullScreen.value = false;
+    }
     updateSubtitleStyle();
   }
 
@@ -1530,7 +1534,29 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
     bool isManualFS = true,
   }) async {
     if (isDesktopPip) return;
-    if (isFullScreen.value == status) return;
+    if (PlatformUtils.isDesktop) {
+      if (status) {
+        if (inAppFullScreen) {
+          if (isFullScreen.value && isWindowFullScreen.value) return;
+          if (isFullScreen.value && !isWindowFullScreen.value) {
+            exitDesktopFullScreen();
+            isWindowFullScreen.value = true;
+            return;
+          }
+        } else {
+          if (isFullScreen.value && !isWindowFullScreen.value) return;
+          if (isFullScreen.value && isWindowFullScreen.value) {
+            enterDesktopFullScreen();
+            isWindowFullScreen.value = false;
+            return;
+          }
+        }
+      } else {
+        if (!isFullScreen.value) return;
+      }
+    } else {
+      if (isFullScreen.value == status) return;
+    }
 
     if (_fsProcessing) return;
     _fsProcessing = true;
@@ -1544,6 +1570,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
             orientation: orientation,
           );
         } else {
+          isWindowFullScreen.value = inAppFullScreen;
           enterDesktopFullScreen(inAppFullScreen: inAppFullScreen);
         }
       } else {
@@ -1556,6 +1583,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
           }
           await resetScreenRotation();
         } else {
+          isWindowFullScreen.value = false;
           exitDesktopFullScreen();
         }
       }
@@ -1665,7 +1693,10 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
 
   void onCloseAll() {
     _isCloseAll = true;
-    if (PlatformUtils.isDesktop) exitDesktopFullScreen();
+    if (PlatformUtils.isDesktop) {
+      exitDesktopFullScreen();
+      isWindowFullScreen.value = false;
+    }
     dispose();
     Get.until((route) => route.isFirst);
   }

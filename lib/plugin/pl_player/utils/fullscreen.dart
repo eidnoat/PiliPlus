@@ -7,18 +7,21 @@ import 'package:flutter/services.dart'
     show SystemChrome, SystemUiOverlay, DeviceOrientation;
 
 bool _isDesktopFullScreen = false;
+bool get isDesktopFullScreen => _isDesktopFullScreen;
 
 void enterDesktopFullScreen({bool inAppFullScreen = false}) {
-  if (!inAppFullScreen && !_isDesktopFullScreen) {
-    WindowController.instance.window?.isFullScreen = _isDesktopFullScreen =
-        true;
+  if (!inAppFullScreen) {
+    _isDesktopFullScreen = true;
+    if (WindowController.instance.window?.isFullScreen != true) {
+      WindowController.instance.window?.isFullScreen = true;
+    }
   }
 }
 
 void exitDesktopFullScreen() {
-  if (_isDesktopFullScreen) {
-    WindowController.instance.window?.isFullScreen = _isDesktopFullScreen =
-        false;
+  _isDesktopFullScreen = false;
+  if (WindowController.instance.window?.isFullScreen == true) {
+    WindowController.instance.window?.isFullScreen = false;
   }
 }
 

@@ -198,10 +198,31 @@ class PlayerFocus extends StatelessWidget {
               ..controlsLock.value = false
               ..showControls.value = false;
           }
-          plPlayerController.triggerFullScreen(
-            status: !isFullScreen,
-            inAppFullScreen: HardwareKeyboard.instance.isShiftPressed,
-          );
+          final isShift = HardwareKeyboard.instance.isShiftPressed;
+          if (isShift) {
+            final isWindowFs =
+                isFullScreen && plPlayerController.isWindowFullScreen.value;
+            if (isWindowFs) {
+              plPlayerController.triggerFullScreen(status: false);
+            } else {
+              plPlayerController.triggerFullScreen(
+                status: true,
+                inAppFullScreen: true,
+              );
+            }
+          } else {
+            final isOsFs = PlatformUtils.isDesktop
+                ? (isFullScreen && !plPlayerController.isWindowFullScreen.value)
+                : isFullScreen;
+            if (isOsFs) {
+              plPlayerController.triggerFullScreen(status: false);
+            } else {
+              plPlayerController.triggerFullScreen(
+                status: true,
+                inAppFullScreen: false,
+              );
+            }
+          }
           return true;
 
         case LogicalKeyboardKey.keyD:
