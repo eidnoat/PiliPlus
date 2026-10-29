@@ -33,6 +33,7 @@ class _HomeTabSelectItem {
 Future<void> showSelectHomeFavDialog(BuildContext context) async {
   if (!Accounts.main.isLogin) {
     SmartDialog.showToast('请先登录');
+    Get.toNamed('/loginPage');
     return;
   }
 

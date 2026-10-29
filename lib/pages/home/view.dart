@@ -170,7 +170,7 @@ class _HomePageState extends CommonPageState<HomePage>
                 if (isLogin) {
                   showSelectHomeFavDialog(context);
                 } else {
-                  Get.toNamed('/login');
+                  Get.toNamed('/loginPage');
                 }
               },
               icon: Icon(isLogin ? Icons.add : Icons.login),
