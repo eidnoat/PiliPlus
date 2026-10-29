@@ -338,7 +338,7 @@ class MainController extends GetxController
 
   bool refreshRecommendations() {
     if (navigationBars[selectedIndex.value] == NavigationBarType.home) {
-      homeController.onRefresh();
+      homeController.onReload();
       return true;
     }
     return false;

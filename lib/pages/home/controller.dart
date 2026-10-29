@@ -33,7 +33,7 @@ class HomeController extends GetxController
 
   final ScrollController _fallbackScrollController = ScrollController();
 
-  ScrollOrRefreshMixin? get controller {
+  CommonController? get controller {
     if (tabs.isEmpty || tabController == null) return null;
     final index = tabController!.index;
     if (index < 0 || index >= tabs.length) return null;
@@ -86,6 +86,13 @@ class HomeController extends GetxController
   @override
   Future<void> onRefresh() {
     return controller?.onRefresh().catchError((e) {
+      if (kDebugMode) debugPrint(e.toString());
+    }) ?? Future.value();
+  }
+
+  Future<void> onReload() {
+    animateToTop();
+    return controller?.onReload().catchError((e) {
       if (kDebugMode) debugPrint(e.toString());
     }) ?? Future.value();
   }

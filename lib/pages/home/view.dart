@@ -22,6 +22,7 @@ import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:material_ui/material_ui.dart';
@@ -312,25 +313,29 @@ class _HomeFavFolderViewState extends State<HomeFavFolderView>
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
+    final child = CustomScrollView(
+      controller: controller.scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.only(
+            left: Style.safeSpace,
+            right: Style.safeSpace,
+            top: Style.cardSpace,
+            bottom: 100,
+          ),
+          sliver: Obx(
+            () => _buildBody(theme, controller.loadingState.value),
+          ),
+        ),
+      ],
+    );
+    if (PlatformUtils.isDesktop) {
+      return child;
+    }
     return refreshIndicator(
       onRefresh: controller.onRefresh,
-      child: CustomScrollView(
-        controller: controller.scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.only(
-              left: Style.safeSpace,
-              right: Style.safeSpace,
-              top: Style.cardSpace,
-              bottom: 100,
-            ),
-            sliver: Obx(
-              () => _buildBody(theme, controller.loadingState.value),
-            ),
-          ),
-        ],
-      ),
+      child: child,
     );
   }
 
@@ -424,23 +429,27 @@ class _HomeHistoryViewState extends State<HomeHistoryView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final child = CustomScrollView(
+      controller: controller.scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.only(
+            top: 7,
+            bottom: 100,
+          ),
+          sliver: Obx(
+            () => _buildBody(controller.loadingState.value),
+          ),
+        ),
+      ],
+    );
+    if (PlatformUtils.isDesktop) {
+      return child;
+    }
     return refreshIndicator(
       onRefresh: controller.onRefresh,
-      child: CustomScrollView(
-        controller: controller.scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.only(
-              top: 7,
-              bottom: 100,
-            ),
-            sliver: Obx(
-              () => _buildBody(controller.loadingState.value),
-            ),
-          ),
-        ],
-      ),
+      child: child,
     );
   }
 
