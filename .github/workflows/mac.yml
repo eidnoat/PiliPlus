@@ -40,8 +40,13 @@ jobs:
       - name: Prepare Upload
         run: |
           npm install --global create-dmg
-          create-dmg build/macos/Build/Products/Release/PiliPlus.app || true
-        continue-on-error: true
+          for i in {1..3}; do
+            create-dmg build/macos/Build/Products/Release/PiliPlus.app && break || sleep 5
+          done
+          if ! ls PiliPlus*.dmg 1> /dev/null 2>&1; then
+            echo "create-dmg failed, falling back to hdiutil..."
+            hdiutil create -volname PiliPlus -srcfolder build/macos/Build/Products/Release/PiliPlus.app -ov -format UDZO PiliPlus.dmg
+          fi
 
       - name: Rename DMG
         run: mv PiliPlus*.dmg PiliPlus_macos_${{ env.version }}.dmg
