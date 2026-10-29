@@ -310,6 +310,16 @@ class MineController extends GetxController with AccountMixin {
     );
   }
 
+  Future<void> onReload() {
+    if (!accountService.isLogin.value) {
+      return Future.syncValue(null);
+    }
+    queryUserInfo();
+    return Future.wait(
+      tabCtr().map((ctr) => ctr.onReload()),
+    );
+  }
+
   @override
   void onChangeAccount(bool isLogin) {
     if (isLogin) {
@@ -338,7 +348,9 @@ mixin MineRefreshMixin<R, T> on CommonListController<R, T> {
 
   @override
   Future<void> onRefresh({bool isManual = true}) {
-    count = null;
+    if (!isManual) {
+      count = null;
+    }
     if (isManual) {
       return super.onRefresh().whenComplete(scrollController.jumpToTop);
     }

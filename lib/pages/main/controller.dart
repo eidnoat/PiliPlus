@@ -10,6 +10,7 @@ import 'package:PiliPlus/models/common/msg/msg_unread_type.dart';
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/pages/dynamics/controller.dart';
 import 'package:PiliPlus/pages/home/controller.dart';
+import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/pages/mine/view.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
@@ -337,11 +338,19 @@ class MainController extends GetxController
   }
 
   bool refreshRecommendations() {
-    if (navigationBars[selectedIndex.value] == NavigationBarType.home) {
-      homeController.onReload();
-      return true;
+    switch (navigationBars[selectedIndex.value]) {
+      case NavigationBarType.home:
+        homeController.onReload();
+        return true;
+      case NavigationBarType.dynamics:
+        dynamicController.onReload();
+        return true;
+      case NavigationBarType.mine:
+        if (Get.isRegistered<MineController>()) {
+          Get.find<MineController>().onReload();
+        }
+        return true;
     }
-    return false;
   }
 
   @override

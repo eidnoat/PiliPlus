@@ -77,6 +77,23 @@ class _MediaPageState extends CommonPageState<MinePage>
   Widget build(BuildContext context) {
     super.build(context);
     final secondary = theme.colorScheme.secondary;
+    final listView = onBuild(
+      ListView(
+        padding: const .only(bottom: 150),
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          _buildUserInfo(theme, secondary),
+          _buildActions(secondary),
+          for (final tab in controller.mineTabs)
+            switch (tab) {
+              .favorite => Obx(_buildFav),
+              .history => Obx(_buildHistory),
+              .later => Obx(_buildLater),
+              .sub => Obx(_buildSub),
+            },
+        ],
+      ),
+    );
     return Column(
       children: [
         Padding(
@@ -86,26 +103,12 @@ class _MediaPageState extends CommonPageState<MinePage>
         Expanded(
           child: Material(
             type: .transparency,
-            child: refreshIndicator(
-              onRefresh: controller.onRefresh,
-              child: onBuild(
-                ListView(
-                  padding: const .only(bottom: 150),
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    _buildUserInfo(theme, secondary),
-                    _buildActions(secondary),
-                    for (final tab in controller.mineTabs)
-                      switch (tab) {
-                        .favorite => Obx(_buildFav),
-                        .history => Obx(_buildHistory),
-                        .later => Obx(_buildLater),
-                        .sub => Obx(_buildSub),
-                      },
-                  ],
-                ),
-              ),
-            ),
+            child: PlatformUtils.isDesktop
+                ? listView
+                : refreshIndicator(
+                    onRefresh: controller.onRefresh,
+                    child: listView,
+                  ),
           ),
         ),
       ],
@@ -516,7 +519,13 @@ class _MediaPageState extends CommonPageState<MinePage>
     final Widget child;
     switch (tabCtr.loadingState.value) {
       case Loading():
-        return const SizedBox.shrink();
+        if (!controller.isLogin || tabCtr.count == null || tabCtr.count == 0) {
+          return const SizedBox.shrink();
+        }
+        child = const SizedBox(
+          height: 180,
+          child: Center(child: CircularProgressIndicator()),
+        );
       case Success(:final response):
         if (response == null || response.isEmpty) {
           return const SizedBox.shrink();

@@ -436,18 +436,7 @@ class _MainAppState extends PopScopeState<MainApp>
               Icons.refresh,
               semanticLabel: '刷新',
             ),
-            onPressed: () {
-              if (_mainController
-                      .navigationBars[_mainController.selectedIndex.value] !=
-                  NavigationBarType.home) {
-                final homeIndex = _mainController.navigationBars
-                    .indexOf(NavigationBarType.home);
-                if (homeIndex != -1) {
-                  _mainController.setIndex(homeIndex);
-                }
-              }
-              _mainController.homeController.onReload();
-            },
+            onPressed: _mainController.refreshRecommendations,
           ),
         ],
       ],
