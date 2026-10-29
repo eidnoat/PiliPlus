@@ -8,6 +8,7 @@ import 'package:PiliPlus/common/widgets/main_layout.dart';
 import 'package:PiliPlus/common/widgets/route_aware_mixin.dart';
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/pages/home/view.dart';
+import 'package:PiliPlus/pages/home/widgets/select_fav_dialog.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/utils/android/bindings.g.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
@@ -409,6 +410,15 @@ class _MainAppState extends PopScopeState<MainApp>
     return Column(
       children: [
         userAvatar(colorScheme: _colorScheme, mainController: _mainController),
+        const SizedBox(height: 8),
+        IconButton(
+          tooltip: '选择首页收藏夹',
+          icon: const Icon(
+            Icons.bookmarks_outlined,
+            semanticLabel: '选择首页收藏夹',
+          ),
+          onPressed: () => showSelectHomeFavDialog(context),
+        ),
         const SizedBox(height: 8),
         IconButton(
           tooltip: '搜索',

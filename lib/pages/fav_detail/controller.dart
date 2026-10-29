@@ -19,6 +19,7 @@ import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/widgets.dart' show Text, ValueChanged;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
@@ -79,6 +80,11 @@ mixin BaseFavController
 class FavDetailController
     extends MultiSelectController<FavDetailData, FavDetailItemModel>
     with BaseFavController, PageOrderMixin {
+  final int? initialMediaId;
+  final String? initialHeroTag;
+
+  FavDetailController({this.initialMediaId, this.initialHeroTag});
+
   @override
   late int mediaId;
   late String heroTag;
@@ -112,8 +118,10 @@ class FavDetailController
   void onInit() {
     super.onInit();
 
-    mediaId = int.parse(Get.parameters['mediaId']!);
-    heroTag = Get.parameters['heroTag']!;
+    mediaId = initialMediaId ?? int.parse(Get.parameters['mediaId']!);
+    heroTag = initialHeroTag ??
+        Get.parameters['heroTag'] ??
+        Utils.makeHeroTag(mediaId);
 
     queryData();
   }

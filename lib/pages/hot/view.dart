@@ -5,9 +5,7 @@ import 'package:PiliPlus/common/widgets/scaffold/simple_scaffold.dart';
 import 'package:PiliPlus/common/widgets/video_card/video_card_h.dart';
 import 'package:PiliPlus/common/widgets/view_safe_area.dart';
 import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/models/common/home_tab_type.dart';
 import 'package:PiliPlus/models/model_hot_video_item.dart';
-import 'package:PiliPlus/pages/home/controller.dart';
 import 'package:PiliPlus/pages/hot/controller.dart';
 import 'package:PiliPlus/pages/rank/view.dart';
 import 'package:PiliPlus/utils/grid.dart';
@@ -76,22 +74,12 @@ class _HotPageState extends State<HotPage>
                       iconUrl: 'https://i0.hdslb.com/bfs/archive/a3f11218aaf4521b4967db2ae164ecd3052586b9.png',
                       title: '排行榜',
                       onTap: () {
-                        try {
-                          final homeController = Get.find<HomeController>();
-                          final index = homeController.tabs.indexOf(
-                            HomeTabType.rank,
-                          );
-                          if (index != -1) {
-                            homeController.tabController.animateTo(index);
-                          } else {
-                            Get.to(
-                              SimpleScaffold(
-                                appBar: AppBar(title: const Text('排行榜')),
-                                body: const ViewSafeArea(child: RankPage()),
-                              ),
-                            );
-                          }
-                        } catch (_) {}
+                        Get.to(
+                          SimpleScaffold(
+                            appBar: AppBar(title: const Text('排行榜')),
+                            body: const ViewSafeArea(child: RankPage()),
+                          ),
+                        );
                       },
                     ),
                     _buildEntranceItem(

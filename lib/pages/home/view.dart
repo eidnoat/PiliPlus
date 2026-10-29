@@ -1,14 +1,23 @@
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/custom_height_widget.dart';
+import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart' show tabBarView;
+import 'package:PiliPlus/http/loading_state.dart';
+import 'package:PiliPlus/models/common/home_fav_tab.dart';
+import 'package:PiliPlus/models_new/fav/fav_detail/media.dart';
 import 'package:PiliPlus/pages/common/common_page.dart';
+import 'package:PiliPlus/pages/fav_detail/controller.dart';
+import 'package:PiliPlus/pages/fav_detail/widget/fav_video_card.dart';
 import 'package:PiliPlus/pages/home/controller.dart';
+import 'package:PiliPlus/pages/home/widgets/select_fav_dialog.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
+import 'package:PiliPlus/utils/grid.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:material_ui/material_ui.dart';
@@ -41,55 +50,127 @@ class _HomePageState extends CommonPageState<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    Widget tabBar;
-    if (_homeController.tabs.length > 1) {
-      tabBar = Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: SizedBox(
-          height: 42,
-          width: double.infinity,
-          child: TabBar(
-            controller: _homeController.tabController,
-            tabs: _homeController.tabs.map((e) => Tab(text: e.label)).toList(),
-            isScrollable: true,
-            dividerColor: Colors.transparent,
-            dividerHeight: 0,
-            splashBorderRadius: Style.mdRadius,
-            tabAlignment: TabAlignment.center,
-            onTap: (_) {
-              feedBack();
-              if (!_homeController.tabController.indexIsChanging) {
-                _homeController.animateToTop();
-              }
-            },
-          ),
-        ),
-      );
-      if (_homeController.hideTopBar &&
-          _mainController.barHideType == .instant) {
-        tabBar = Material(
-          color: _colorScheme.surface,
-          child: tabBar,
-        );
-      }
-    } else {
-      tabBar = const SizedBox(height: 6);
-    }
-    return Column(
-      children: [
-        if (!_mainController.useSideBar &&
-            MediaQuery.sizeOf(context).isPortrait)
-          customAppBar(),
-        tabBar,
-        Expanded(
-          child: onBuild(
-            tabBarView(
+    return Obx(() {
+      Widget tabBar;
+      if (_homeController.tabs.length > 1 &&
+          _homeController.tabController != null) {
+        tabBar = Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: SizedBox(
+            height: 42,
+            width: double.infinity,
+            child: TabBar(
               controller: _homeController.tabController,
-              children: _homeController.tabs.map((e) => e.page).toList(),
+              tabs: _homeController.tabs
+                  .map((e) => Tab(text: e.title))
+                  .toList(),
+              isScrollable: true,
+              dividerColor: Colors.transparent,
+              dividerHeight: 0,
+              splashBorderRadius: Style.mdRadius,
+              tabAlignment: TabAlignment.center,
+              onTap: (_) {
+                feedBack();
+                if (!_homeController.tabController!.indexIsChanging) {
+                  _homeController.animateToTop();
+                }
+              },
             ),
           ),
+        );
+        if (_homeController.hideTopBar &&
+            _mainController.barHideType == .instant) {
+          tabBar = Material(
+            color: _colorScheme.surface,
+            child: tabBar,
+          );
+        }
+      } else {
+        tabBar = const SizedBox(height: 6);
+      }
+
+      Widget content;
+      if (_homeController.tabs.isEmpty) {
+        content = _buildEmptyView();
+      } else if (_homeController.tabs.length == 1) {
+        content = HomeFavFolderView(
+          key: ValueKey(_homeController.tabs.first.id),
+          tab: _homeController.tabs.first,
+        );
+      } else {
+        content = tabBarView(
+          controller: _homeController.tabController!,
+          children: _homeController.tabs
+              .map(
+                (tab) => HomeFavFolderView(
+                  key: ValueKey(tab.id),
+                  tab: tab,
+                ),
+              )
+              .toList(),
+        );
+      }
+
+      return Column(
+        children: [
+          if (!_mainController.useSideBar &&
+              MediaQuery.sizeOf(context).isPortrait)
+            customAppBar(),
+          tabBar,
+          Expanded(
+            child: onBuild(content),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildEmptyView() {
+    final isLogin = _mainController.accountService.isLogin.value;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isLogin ? Icons.bookmarks_outlined : Icons.account_circle_outlined,
+              size: 64,
+              color: _colorScheme.outline,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isLogin ? '首页暂无收藏夹' : '未登录',
+              style: TextStyle(
+                fontSize: 16,
+                color: _colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isLogin ? '点击下方按钮选择要在首页展示的收藏夹' : '请先登录后选择收藏夹展示在首页',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: _colorScheme.outline,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () {
+                if (isLogin) {
+                  showSelectHomeFavDialog(context);
+                } else {
+                  Get.toNamed('/login');
+                }
+              },
+              icon: Icon(isLogin ? Icons.add : Icons.login),
+              label: Text(isLogin ? '选择收藏夹' : '前往登录'),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -99,6 +180,12 @@ class _HomePageState extends CommonPageState<HomePage>
       children: [
         searchBar(),
         const SizedBox(width: 8),
+        IconButton(
+          tooltip: '选择首页收藏夹',
+          icon: const Icon(Icons.bookmarks_outlined),
+          onPressed: () => showSelectHomeFavDialog(context),
+        ),
+        const SizedBox(width: 4),
         userAvatar(colorScheme: _colorScheme, mainController: _mainController),
       ],
     );
@@ -180,6 +267,108 @@ class _HomePageState extends CommonPageState<HomePage>
         ),
       ),
     );
+  }
+}
+
+class HomeFavFolderView extends StatefulWidget {
+  final HomeFavTab tab;
+  const HomeFavFolderView({super.key, required this.tab});
+
+  @override
+  State<HomeFavFolderView> createState() => _HomeFavFolderViewState();
+}
+
+class _HomeFavFolderViewState extends State<HomeFavFolderView>
+    with AutomaticKeepAliveClientMixin, GridMixin {
+  late final FavDetailController controller;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(
+      FavDetailController(initialMediaId: widget.tab.id),
+      tag: 'home_fav_${widget.tab.id}',
+    );
+  }
+
+  @override
+  void dispose() {
+    Get.delete<FavDetailController>(tag: 'home_fav_${widget.tab.id}');
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final theme = Theme.of(context);
+    return refreshIndicator(
+      onRefresh: controller.onRefresh,
+      child: CustomScrollView(
+        controller: controller.scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.only(
+              left: Style.safeSpace,
+              right: Style.safeSpace,
+              top: Style.cardSpace,
+              bottom: 100,
+            ),
+            sliver: Obx(
+              () => _buildBody(theme, controller.loadingState.value),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    ThemeData theme,
+    LoadingState<List<FavDetailItemModel>?> loadingState,
+  ) {
+    return switch (loadingState) {
+      Loading() => gridSkeleton,
+      Success(:final response) =>
+        response != null && response.isNotEmpty
+            ? SliverGrid.builder(
+                gridDelegate: gridDelegate,
+                itemBuilder: (context, index) {
+                  if (index == response.length) {
+                    controller.onLoadMore();
+                    return Container(
+                      height: 60,
+                      alignment: Alignment.center,
+                      child: Text(
+                        controller.isEnd ? '没有更多了' : '加载中...',
+                        style: TextStyle(
+                          color: theme.colorScheme.outline,
+                          fontSize: 13,
+                        ),
+                      ),
+                    );
+                  }
+                  final item = response[index];
+                  return FavVideoCardH(
+                    item: item,
+                    index: index,
+                    ctr: controller,
+                  );
+                },
+                itemCount: response.length + 1,
+              )
+            : HttpError(
+                errMsg: '收藏夹为空',
+                onReload: controller.onReload,
+              ),
+      Error(:final errMsg) => HttpError(
+          errMsg: errMsg,
+          onReload: controller.onReload,
+        ),
+    };
   }
 }
 

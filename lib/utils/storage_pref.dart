@@ -927,6 +927,9 @@ abstract final class Pref {
 
   static int? get quickFavId => _setting.get(SettingBoxKey.quickFavId);
 
+  static List? get homeFavFolderList =>
+      _setting.get(SettingBoxKey.homeFavFolderList);
+
   static bool get tempPlayerConf =>
       _setting.get(SettingBoxKey.tempPlayerConf, defaultValue: false);
 

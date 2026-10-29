@@ -1,12 +1,15 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:PiliPlus/http/api.dart';
+import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/init.dart';
-import 'package:PiliPlus/models/common/home_tab_type.dart';
+import 'package:PiliPlus/http/loading_state.dart';
+import 'package:PiliPlus/models/common/home_fav_tab.dart';
 import 'package:PiliPlus/pages/common/common_controller.dart';
+import 'package:PiliPlus/pages/fav_detail/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/services/account_service.dart';
+import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
@@ -16,9 +19,9 @@ import 'package:get/get.dart';
 import 'package:material_ui/material_ui.dart';
 
 class HomeController extends GetxController
-    with GetSingleTickerProviderStateMixin, ScrollOrRefreshMixin {
-  late List<HomeTabType> tabs;
-  late TabController tabController;
+    with GetTickerProviderStateMixin, ScrollOrRefreshMixin {
+  final RxList<HomeFavTab> tabs = <HomeFavTab>[].obs;
+  TabController? tabController;
 
   RxBool? showTopBar;
   late final bool hideTopBar;
@@ -27,10 +30,23 @@ class HomeController extends GetxController
   late final RxString defaultSearch = ''.obs;
   late int lateCheckSearchAt = 0;
 
-  ScrollOrRefreshMixin get controller => tabs[tabController.index].ctr();
+  final ScrollController _fallbackScrollController = ScrollController();
+
+  ScrollOrRefreshMixin? get controller {
+    if (tabs.isEmpty || tabController == null) return null;
+    final index = tabController!.index;
+    if (index < 0 || index >= tabs.length) return null;
+    final tab = tabs[index];
+    try {
+      return Get.find<FavDetailController>(tag: 'home_fav_${tab.id}');
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
-  ScrollController get scrollController => controller.scrollController;
+  ScrollController get scrollController =>
+      controller?.scrollController ?? _fallbackScrollController;
 
   AccountService accountService = Get.find<AccountService>();
 
@@ -55,48 +71,83 @@ class HomeController extends GetxController
     }
 
     setTabConfig();
+
+    ever(accountService.isLogin, (bool isLogin) {
+      if (isLogin && tabs.isEmpty) {
+        _tryLoadDefaultFavFolder();
+      }
+    });
   }
 
   @override
   Future<void> onRefresh() {
-    return controller.onRefresh().catchError((e) {
+    return controller?.onRefresh().catchError((e) {
       if (kDebugMode) debugPrint(e.toString());
-    });
+    }) ?? Future.value();
   }
 
   void setTabConfig() {
-    final tabs = GStorage.setting.get(SettingBoxKey.tabBarSort) as List?;
-    if (tabs != null) {
-      this.tabs = tabs
-          .map((i) => HomeTabType.values[i])
-          .where(
-            (e) =>
-                e != HomeTabType.rcmd &&
-                e != HomeTabType.hot &&
-                e != HomeTabType.rank,
-          )
-          .toList();
+    final cached = GStorage.setting.get(SettingBoxKey.homeFavFolderList) as List?;
+    if (cached != null && cached.isNotEmpty) {
+      tabs.assignAll(
+        cached
+            .map(
+              (e) => HomeFavTab.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ),
+            )
+            .toList(),
+      );
+      _initTabController();
     } else {
-      this.tabs = HomeTabType.values
-          .where(
-            (e) =>
-                e != HomeTabType.rcmd &&
-                e != HomeTabType.hot &&
-                e != HomeTabType.rank,
-          )
-          .toList();
+      tabs.clear();
+      _initTabController();
+      _tryLoadDefaultFavFolder();
     }
+  }
 
-    tabController = TabController(
-      initialIndex: max(0, this.tabs.indexOf(HomeTabType.bangumi)),
-      length: this.tabs.length,
-      vsync: this,
+  void _initTabController() {
+    tabController?.dispose();
+    if (tabs.isNotEmpty) {
+      tabController = TabController(
+        length: tabs.length,
+        vsync: this,
+      );
+    } else {
+      tabController = null;
+    }
+    update();
+  }
+
+  void setFolders(List<HomeFavTab> newTabs) {
+    GStorage.setting.put(
+      SettingBoxKey.homeFavFolderList,
+      newTabs.map((e) => e.toJson()).toList(),
     );
+    tabs.assignAll(newTabs);
+    _initTabController();
+  }
+
+  Future<void> _tryLoadDefaultFavFolder() async {
+    if (Accounts.main.isLogin) {
+      final res = await FavHttp.allFavFolders(Accounts.main.mid);
+      if (res case Success(:final response)) {
+        final list = response.list;
+        if (list != null && list.isNotEmpty && tabs.isEmpty) {
+          final defaultFolder = list.first;
+          final newTabs = [
+            HomeFavTab(id: defaultFolder.id, title: defaultFolder.title),
+          ];
+          setFolders(newTabs);
+        }
+      }
+    }
   }
 
   @override
   void dispose() {
-    tabController.dispose();
+    _fallbackScrollController.dispose();
+    tabController?.dispose();
     super.dispose();
   }
 
@@ -108,7 +159,6 @@ class HomeController extends GetxController
       );
       if (res.data['code'] == 0) {
         defaultSearch.value = res.data['data']?['name'] ?? '';
-        // defaultSearch.value = res.data['data']?['show_name'] ?? '';
       }
     } catch (_) {}
   }

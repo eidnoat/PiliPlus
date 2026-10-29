@@ -20,6 +20,7 @@ import 'package:PiliPlus/models/common/member/tab_type.dart';
 import 'package:PiliPlus/models/common/mine_tab_type.dart';
 import 'package:PiliPlus/models/common/msg/msg_unread_type.dart';
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
+import 'package:PiliPlus/pages/home/widgets/select_fav_dialog.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/models/common/theme/theme_type.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
@@ -386,17 +387,10 @@ List<SettingsModel> get styleSettings => [
     onTap: _showSpringDialog,
   ),
   NormalModel(
-    onTap: (context, setState) => Get.toNamed(
-      '/barSetting',
-      arguments: {
-        'key': SettingBoxKey.tabBarSort,
-        'defaultBars': HomeTabType.values,
-        'title': '首页标签页',
-      },
-    ),
-    title: '首页标签页',
-    subtitle: '删除或调换首页标签页',
-    leading: const Icon(Icons.toc_outlined),
+    onTap: (context, setState) => showSelectHomeFavDialog(context),
+    title: '首页收藏夹',
+    subtitle: '选择在首页展示的收藏夹标签页',
+    leading: const Icon(Icons.bookmarks_outlined),
   ),
   NormalModel(
     onTap: (context, setState) => Get.toNamed(
