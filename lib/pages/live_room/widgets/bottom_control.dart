@@ -205,8 +205,9 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
             if (PlatformUtils.isDesktop && !plPlayerController.isDesktopPip)
               Obx(() {
                 final isFullScreen = plPlayerController.isFullScreen.value;
-                final isWindowFs =
-                    isFullScreen && plPlayerController.isWindowFullScreen.value;
+                final isWindowFullScreen =
+                    plPlayerController.isWindowFullScreen.value;
+                final isWindowFs = isFullScreen && isWindowFullScreen;
                 return ComBtn(
                   height: 30,
                   tooltip: isWindowFs ? '退出窗口全屏' : '窗口全屏',
@@ -236,10 +237,11 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
             if (!plPlayerController.isDesktopPip)
               Obx(() {
                 final isFullScreen = plPlayerController.isFullScreen.value;
-                final isDesktopFs =
-                    isFullScreen && !plPlayerController.isWindowFullScreen.value;
-                final isOsFs =
-                    PlatformUtils.isDesktop ? isDesktopFs : isFullScreen;
+                final isWindowFullScreen =
+                    plPlayerController.isWindowFullScreen.value;
+                final isOsFs = PlatformUtils.isDesktop
+                    ? (isFullScreen && !isWindowFullScreen)
+                    : isFullScreen;
                 return ComBtn(
                   height: 30,
                   tooltip: isOsFs ? '退出全屏' : '全屏',
@@ -264,10 +266,13 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
                       );
                     }
                   },
-                  onSecondaryTap: () => plPlayerController.triggerFullScreen(
-                    status: !isFullScreen,
-                    inAppFullScreen: true,
-                  ),
+                  onSecondaryTap: () {
+                    final isWindowFs = isFullScreen && isWindowFullScreen;
+                    plPlayerController.triggerFullScreen(
+                      status: !isWindowFs,
+                      inAppFullScreen: true,
+                    );
+                  },
                 );
               }),
           ],

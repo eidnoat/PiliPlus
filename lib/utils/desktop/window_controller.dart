@@ -76,20 +76,8 @@ class WindowController {
       case WindowClosedEvent():
         break;
       case WindowEnteredFullScreenEvent():
-        final controller = PlPlayerController.instance;
-        if (controller != null &&
-            controller.isFullScreen.value &&
-            controller.isWindowFullScreen.value) {
-          controller.isWindowFullScreen.value = false;
-        }
         break;
       case WindowExitedFullScreenEvent():
-        final controller = PlPlayerController.instance;
-        if (controller != null &&
-            controller.isFullScreen.value &&
-            !controller.isWindowFullScreen.value) {
-          controller.triggerFullScreen(status: false);
-        }
         break;
       case WindowCloseRequestedEvent():
         event.request.cancel();

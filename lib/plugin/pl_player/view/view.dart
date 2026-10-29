@@ -856,8 +856,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       /// 窗口全屏
       BottomControlType.windowFullscreen => Obx(
         () {
-          final isWindowFs =
-              isFullScreen && plPlayerController.isWindowFullScreen.value;
+          final isFullScreen = plPlayerController.isFullScreen.value;
+          final isWindowFullScreen =
+              plPlayerController.isWindowFullScreen.value;
+          final isWindowFs = isFullScreen && isWindowFullScreen;
           return ComBtn(
             width: widgetWidth,
             height: 30,
@@ -882,9 +884,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       /// 全屏
       BottomControlType.fullscreen => Obx(
         () {
-          final isDesktopFs =
-              isFullScreen && !plPlayerController.isWindowFullScreen.value;
-          final isOsFs = PlatformUtils.isDesktop ? isDesktopFs : isFullScreen;
+          final isFullScreen = plPlayerController.isFullScreen.value;
+          final isWindowFullScreen =
+              plPlayerController.isWindowFullScreen.value;
+          final isOsFs = PlatformUtils.isDesktop
+              ? (isFullScreen && !isWindowFullScreen)
+              : isFullScreen;
           return ComBtn(
             width: widgetWidth,
             height: 30,
@@ -902,10 +907,13 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 );
               }
             },
-            onSecondaryTap: () => plPlayerController.triggerFullScreen(
-              status: !isFullScreen,
-              inAppFullScreen: true,
-            ),
+            onSecondaryTap: () {
+              final isWindowFs = isFullScreen && isWindowFullScreen;
+              plPlayerController.triggerFullScreen(
+                status: !isWindowFs,
+                inAppFullScreen: true,
+              );
+            },
           );
         },
       ),
