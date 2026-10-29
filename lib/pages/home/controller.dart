@@ -19,7 +19,7 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/wbi_sign.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:get/get.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart' hide RefreshIndicatorState;
 
 class HomeController extends GetxController
     with GetTickerProviderStateMixin, ScrollOrRefreshMixin {
